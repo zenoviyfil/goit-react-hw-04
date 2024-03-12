@@ -1,18 +1,16 @@
-const ImageGallery = ({ items = null }) => {
-    return (
-      <ul>
-        {items !== null &&
-          Array.isArray(items) &&
-          items.map((item) => {
-            return (
-              <li key={item.id}>
-                <img width={250} src={item.thumbnail} alt={item.title} />
-
-              </li>
-            );
-          })}
-      </ul>
-    );
-  };
-  
-  export default ImageGallery;
+import ImageCard from "../ImageCard/ImageCard";
+import css from "./ImageGallery.module.css";
+const ImageGallery = ({ images, onToggle }) => {
+  return (
+    <ul className={css.gallery}>
+      {images.map((image) => {
+        return (
+          <li key={image.id}>
+            <ImageCard image={image} onToggle={onToggle} />
+          </li>
+        );
+      })}
+    </ul>
+  );
+};
+export default ImageGallery;

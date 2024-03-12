@@ -1,65 +1,102 @@
-import { useEffect, useState } from 'react'
-import './App.css'
-import SearchBar from './components/SearchBar/SearchBar'
-import  { requestData, requestQuery } from './assets/apiservcie/api'
-import { ErrorMessage } from 'formik'
-import Loader from './components/Loader/Loader'
-import ImageGallery from './components/ImageGallery/ImageGallery'
+import "./App.css";
+
+import { useState, useEffect } from "react";
+import { fetchPhoto } from "./apiservice/api";
+import { toast, Toaster } from "react-hot-toast";
+
+import SearchBar from "./components/SearchBar/SearchBar";
+import ImageGallery from "./components/ImageGallery/ImageGallery";
+import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import Loader from "./components/Loader/Loader";
+import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
+import ImageModal from "./components/ImageModal/ImageModal";
 
 function App() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(false)
-  const [query, setQuery] = useState(null)
-  const [items, setItems] = useState(null)
+  const [images, setImages] = useState([]);
+  const [info, setInfo] = useState({});
+  const [searchPhoto, setSearchPhoto] = useState("");
+  const [loadMoreBtn, setLoadMoreBtn] = useState(false);
+  const [modalState, setModalState] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const per_page = 12;
 
   useEffect(() => {
-    async function fetchData() {
+    const fetchData = async () => {
       try {
-        setLoading(true)
-        const data = await requestData();
-
-        setItems(data.items)
+        setError(false);
+        setLoading(true);
+        setLoadMoreBtn(false);
+        const res = await fetchPhoto(
+          currentPage,
+          per_page,
+          searchPhoto
+        );
+        if (res.total === 0) {
+          setImages([]);
+          setError(true);
+          toast.error("Sorry, there are no images matching your search query. Please try again!")
+        } else {
+          setImages((prevImages) => [...prevImages, ...res.results]);
+          if (currentPage < res.total_pages) {
+            setLoadMoreBtn(true);
+          } else {
+            setLoadMoreBtn(false)
+          }
+        }
       } catch (error) {
-        setError(true)
+        setError(error.message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
+    };
+    if (searchPhoto !== "") fetchData();
+  }, [currentPage, searchPhoto]);
+
+  const handleSearch = (photo) => {
+    if (photo !== "" && photo !== searchPhoto) {
+      setSearchPhoto(photo);
+      setCurrentPage(1);
+      setImages([]);
     }
+  };
+  const handlePagination = () => {
+    setCurrentPage((prevPage) => prevPage + 1);
+  };
 
-    fetchData()
-  }, [])
+  const handleToggle = (image) => {
+    setInfo(image);
+    openModal();
+  };
 
-  useEffect(() => {
-    if (query === null) return
-
-    async function fetchDataQuery() {
-      try {
-        setLoading(true)
-        const data = await requestQuery(query)
-
-        setItems(data.items)
-      } catch (error) {
-        setError(true)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchDataQuery()
-  }, [query])
-
-  const onSetQuery = (query) => {
-    setQuery(query)
-  }
+  const openModal = () => {
+    setModalState(true);
+  };
+  const closeModal = () => {
+    setModalState(false);
+  };
 
   return (
     <>
-      <SearchBar onSetQuery={onSetQuery} />
-      {error && <ErrorMessage />}
+      <SearchBar onSearch={handleSearch} />
+      {images.length > 0 && (
+        <ImageGallery images={images} 
+        onToggle={handleToggle}
+         />
+      )}
       {loading && <Loader />}
-      <ImageGallery items={items} />
+      {error && <ErrorMessage message={error} />}
+      {loadMoreBtn && <LoadMoreBtn onLoadMore={handlePagination} />}
+      <ImageModal
+        modalState={modalState}
+        modalOnClose={closeModal}
+        {...info}
+      />
+      <Toaster position="bottom-right" reverseOrder={false}/>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
