@@ -29,4 +29,4 @@ const ImageModal = ({
     </ReactModal>
   );
 };
-export default ImageModal;
+export default ImageModal; 

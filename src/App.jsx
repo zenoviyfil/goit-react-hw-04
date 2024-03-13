@@ -3,6 +3,7 @@ import "./App.css";
 import { useState, useEffect } from "react";
 import { fetchPhoto } from "./apiservice/api";
 import { toast, Toaster } from "react-hot-toast";
+import { useToggle } from "./hooks/useToggle";
 
 import SearchBar from "./components/SearchBar/SearchBar";
 import ImageGallery from "./components/ImageGallery/ImageGallery";
@@ -16,7 +17,6 @@ function App() {
   const [info, setInfo] = useState({});
   const [searchPhoto, setSearchPhoto] = useState("");
   const [loadMoreBtn, setLoadMoreBtn] = useState(false);
-  const [modalState, setModalState] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
@@ -66,16 +66,11 @@ function App() {
     setCurrentPage((prevPage) => prevPage + 1);
   };
 
+  const { isOpen, open, close } = useToggle();
+
   const handleToggle = (image) => {
     setInfo(image);
-    openModal();
-  };
-
-  const openModal = () => {
-    setModalState(true);
-  };
-  const closeModal = () => {
-    setModalState(false);
+    open();
   };
 
   return (
@@ -90,8 +85,8 @@ function App() {
       {error && <ErrorMessage message={error} />}
       {loadMoreBtn && <LoadMoreBtn onLoadMore={handlePagination} />}
       <ImageModal
-        modalState={modalState}
-        modalOnClose={closeModal}
+        modalState={isOpen}
+        modalOnClose={close}
         {...info}
       />
       <Toaster position="bottom-right" reverseOrder={false}/>
